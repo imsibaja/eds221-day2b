@@ -1,0 +1,103 @@
+---
+title: "Wild Data"
+author: "IMS"
+format: html
+message: FALSE 
+warning: FALSE
+---
+
+# Wild data
+## Set-up
+Visit the EDI site to learn about Mack Creek salamander & cutthroat trout data you’ll be using here: data package
+
+- Download the first CSV listed (AS00601.csv), and take a look at it (outside of R is fine as a first step, e.g. you can open the CSV in Excel)
+- Explore the metadata (see View Full Metadata in the Resources section of the data website)
+- What does each column contain? What are the units of each? What is the study overall about?
+- Create a new Quarto Document and save it in your docs folder. Attach the tidyverse, here and janitor packages in the setup chunk (you choose the file name)
+- Set global options in the YAML so that messages and warnings do NOT show up in the rendered document
+- Save the AS00601.csv in your data folder of your project
+
+## Read in the data
+- Read in the data using read_csv() with here(), store as mack_verts
+- Look at what you’ve read in (e.g. with view())
+
+## A bit of wrangling & exploring
+- Update the variable names in mack_verts to lower snake case
+
+```{r}
+library(tidyverse)
+library(here)
+library(janitor)
+```
+
+```{r}
+trout_csv <- read_csv(here::here("data", "AS00601.csv"))
+mack_verts <- clean_names(trout_csv)
+view(mack_verts)
+```
+
+- In a new code chunk, practice accessing individual pieces of the data frame (there is no real functionality to this right now, but just to reinforce stuff we learned in our interactive session):
+
+- Store the 5th value in column `“WEIGHT”` as `mc_wt_5`. Check by looking at your data frame to confirm.
+- Store the 8th - 20th value in the `“LENGTH1”` column as `mc_length_8_20`. Check by looking at your data frame to confirm.
+- Store everything in column SAMPLEDATE as a vector called `mc_dates`
+
+```{r}
+mack_verts$year[2]
+
+mc_wt_5 <- mack_verts$weight[5]
+mc_length_8_20 <- mack_verts$length1[8:20]
+mc_length_8_20
+mc_dates <- mack_verts$sampledate
+```
+
+## Make a salamander subset
+- Create a subset that only contains observations for Pacific Giant Salamanders (species Dicamptodon tenebrosus, stored in species as DITE). Store the subset as mc_salamanders. Hint: see dplyr::filter()!
+
+```{r}
+mc_salamanders <- dplyr::filter(mack_verts, species== "DITE")
+mc_salamanders
+```
+
+## Make a scatterplot of salamander length x weight
+- Create a scatterplot of length1 (snout-vent length in millimeters) versus weight (grams) for all salamanders in the subset you created above, mc_salamanders. 
+- Update axis labels, title, subtitle, and add a caption with the data source. Customize point color and size, possibly opacity, and theme.
+- Export your scatterplot as salamander_size.png to your figs folder.
+
+```{r}
+ggplot(mc_salamanders, mapping= aes(weight, length1)) +
+  geom_jitter(aes(color = year, size = unittype, opacity = vert_index )) +
+  labs(x="Weight (g)", 
+       y="Snout-Vent Length (mm)", 
+       title="Snout-Vent Length vs Weight", 
+       subtitle = "In Pacific Giant Salamanders (Dicamptodon tenebrosus)",
+       caption = "Data from EDI site with data on Mack Creek salamander & cutthroat trout")+
+  theme_classic()
+
+ggsave(here::here("figs", "mc_salamanders.png"), height = 6, width = 7)
+```
+## Make a cutthroat plot
+- Similar to above, make a subset called mc_trout that only contains observations for cutthroat trout (species “ONCL”)
+- Create a scatterplot of length1 by weight for all trout in the dataset
+- Customize so that the point color depends on reach
+- Customize your color scheme (e.g. scale_color_manual())
+- Facet your plot by creek reach (hint: facet_wrap(~...))
+- Update graph axis labels and title
+- Export your graph as cutthroat_size.png to the figs folder
+
+```{r}
+mc_trout <- dplyr::filter(mack_verts, species== "ONCL")
+ggplot(mc_trout, mapping= aes(weight, length1)) +
+  geom_point(aes(fill = reach), shape = 21 ) +
+  facet_wrap(~reach)+
+  labs(x="Weight (g)", 
+       y="Trout Length (mm)", 
+       title="Trout Length vs Weight", 
+       subtitle = "In Cutthroat Trout (Oncorhynchus clarkii)",
+       caption = "Data from EDI site with data on Mack Creek salamander & cutthroat trout") +
+  #scale_color_manual(values = c("magenta", "cyan", "yellow")) +
+  theme_classic()
+
+ggsave(here::here("figs", "mc_salamanders.png"), height = 6, width = 7)
+```
+
